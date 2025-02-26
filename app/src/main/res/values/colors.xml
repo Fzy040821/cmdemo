@@ -2,6 +2,18 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    
+    <!-- 车载主题颜色 -->
+    <color name="car_primary">#1E2329</color>
+    <color name="car_background">#121518</color>
+    <color name="car_accent">#2196F3</color>
+    <color name="car_text_primary">#FFFFFF</color>
+    <color name="car_text_secondary">#B3FFFFFF</color>
+    <color name="car_divider">#1FFFFFFF</color>
+    <color name="car_item_background">#272B30</color>
+    <color name="car_selected_background">#3D2196F3</color>
+
+    <!-- 原有的颜色 -->
     <color name="selected_background">#1A000000</color>
     <color name="placeholder_color">#DDDDDD</color>
     <color name="selected_item_color">#E3F2FD</color>

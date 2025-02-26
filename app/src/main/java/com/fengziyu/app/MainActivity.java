@@ -70,6 +70,7 @@ public class MainActivity extends AppCompatActivity {
                     tab.setText("运营消息");
                     break;
             }
+            
             // 为每个类型设置未读消息数监听
             final String finalType = type;
             viewModel.getUnreadCountByType(finalType).observe(this, count -> {

@@ -39,10 +39,12 @@ public class MessageListFragment extends Fragment {
     private ActionMode actionMode;
     private List<Message> selectedMessages = new ArrayList<>();
 
+    //批量删除
     private ActionMode.Callback actionModeCallback = new ActionMode.Callback() {
         @Override
         public boolean onCreateActionMode(ActionMode mode, Menu menu) {
             mode.getMenuInflater().inflate(R.menu.menu_message_selection, menu);
+            mode.setTitle("1 已选择");
             return true;
         }
 
@@ -54,8 +56,18 @@ public class MessageListFragment extends Fragment {
         @Override
         public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
             if (item.getItemId() == R.id.action_delete) {
-                viewModel.deleteMessages(selectedMessages);
-                mode.finish();
+                new AlertDialog.Builder(requireContext())
+                    .setTitle("确认删除")
+                    .setMessage("确定要删除选中的 " + selectedMessages.size() + " 条消息吗？")
+                    .setPositiveButton("删除", (dialog, which) -> {
+                        // 删除数据库中的数据
+                        viewModel.deleteMessages(new ArrayList<>(selectedMessages));
+                        // 清理选中状态
+                        selectedMessages.clear();
+                        mode.finish();
+                    })
+                    .setNegativeButton("取消", null)
+                    .show();
                 return true;
             }
             return false;
@@ -105,15 +117,27 @@ public class MessageListFragment extends Fragment {
         recyclerView.setAdapter(adapter);
 
         adapter.setOnItemClickListener(message -> {
-            Intent intent = new Intent(requireContext(), MessageDetailActivity.class);
-            intent.putExtra("message_id", message.getId());
-            startActivity(intent);
-            viewModel.markAsRead(message.getId());
+            if (actionMode != null) {
+                // 在多选模式下，点击切换选中状态
+                toggleSelection(message);
+            } else {
+                // 正常模式下，打开详情页
+                Intent intent = new Intent(requireContext(), MessageDetailActivity.class);
+                intent.putExtra("message_id", message.getId());
+                startActivity(intent);
+                viewModel.markAsRead(message.getId());
+            }
         });
 
         adapter.setOnItemLongClickListener(message -> {
-            showDeleteConfirmationDialog(message);
-            return true;
+            if (actionMode == null) {
+                // 进入多选模式
+                actionMode = requireActivity().startActionMode(actionModeCallback);
+                adapter.toggleSelection(message);
+                selectedMessages.add(message);
+                return true;
+            }
+            return false;
         });
 
         // 设置下拉刷新
@@ -131,6 +155,7 @@ public class MessageListFragment extends Fragment {
             viewModel.markAllAsRead();
         });
 
+        // 观察消息列表变化
         viewModel.getAllMessages().observe(getViewLifecycleOwner(), messages -> {
             loadingView.setVisibility(View.GONE);
             
@@ -151,14 +176,22 @@ public class MessageListFragment extends Fragment {
         });
     }
 
-    private void showDeleteConfirmationDialog(Message message) {
-        new AlertDialog.Builder(requireContext())
-            .setTitle("确认删除")
-            .setMessage("您确定要删除这条消息吗？")
-            .setPositiveButton("删除", (dialog, which) -> {
-                viewModel.deleteMessage(message);
-            })
-            .setNegativeButton("取消", null)
-            .show();
+    // 添加切换选中状态的方法
+    private void toggleSelection(Message message) {
+        if (selectedMessages.contains(message)) {
+            selectedMessages.remove(message);
+        } else {
+            selectedMessages.add(message);
+        }
+        adapter.toggleSelection(message);
+
+        // 更新 ActionMode 标题
+        if (actionMode != null) {
+            actionMode.setTitle(selectedMessages.size() + " 已选择");
+            // 如果没有选中的项目，退出多选模式
+            if (selectedMessages.isEmpty()) {
+                actionMode.finish();
+            }
+        }
     }
 } 

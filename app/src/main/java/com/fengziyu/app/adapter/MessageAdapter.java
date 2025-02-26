@@ -45,7 +45,7 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
     }
 
     public void setMessages(List<Message> messages) {
-        this.messages = messages;
+        this.messages = new ArrayList<>(messages);
         notifyDataSetChanged();
     }
 
@@ -59,6 +59,12 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
     }
 
     public void clearSelection() {
+        selectedMessages.clear();
+        notifyDataSetChanged();
+    }
+
+    public void removeMessages(List<Message> messagesToRemove) {
+        messages.removeAll(messagesToRemove);
         selectedMessages.clear();
         notifyDataSetChanged();
     }
@@ -81,8 +87,8 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
         // 格式化并设置时间
         holder.tvTime.setText(dateFormat.format(new Date(message.getTimestamp())));
         
-        // 处理未读标记
-        holder.ivUnread.setVisibility(message.isRead() ? View.GONE : View.VISIBLE);
+        // 设置消息类型图标
+        setMessageTypeIcon(holder.ivIcon, message.getType());
         
         // 处理媒体内容
         if (message.getMediaUrl() != null && !message.getMediaUrl().isEmpty()) {
@@ -105,6 +111,9 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
         
         // 设置选中状态的背景
         holder.itemView.setSelected(selectedMessages.contains(message));
+        
+        // 处理未读标记
+        holder.tvUnread.setVisibility(message.isRead() ? View.GONE : View.VISIBLE);
         
         // 设置点击事件
         holder.itemView.setOnClickListener(v -> {
@@ -132,8 +141,8 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
         TextView tvTitle;
         TextView tvContent;
         TextView tvTime;
+        TextView tvUnread;
         ImageView ivMedia;
-        ImageView ivUnread;
         ImageView ivPlayIcon;
         View mediaContainer;
 
@@ -143,8 +152,8 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
             tvTitle = itemView.findViewById(R.id.tvTitle);
             tvContent = itemView.findViewById(R.id.tvContent);
             tvTime = itemView.findViewById(R.id.tvTime);
+            tvUnread = itemView.findViewById(R.id.tvUnread);
             ivMedia = itemView.findViewById(R.id.ivMedia);
-            ivUnread = itemView.findViewById(R.id.ivUnread);
             ivPlayIcon = itemView.findViewById(R.id.ivPlayIcon);
             mediaContainer = itemView.findViewById(R.id.mediaContainer);
         }
@@ -153,5 +162,23 @@ public class MessageAdapter extends RecyclerView.Adapter<MessageAdapter.MessageV
     public void delete(Message message) {
         messages.remove(message);
         notifyDataSetChanged();
+    }
+
+    private void setMessageTypeIcon(ImageView imageView, String type) {
+        int iconRes;
+        switch (type) {
+            case "SYSTEM":
+                iconRes = R.drawable.ic_system_message;
+                break;
+            case "BUSINESS":
+                iconRes = R.drawable.ic_business_message;
+                break;
+            case "OPERATION":
+                iconRes = R.drawable.ic_operation_message;
+                break;
+            default:
+                iconRes = R.drawable.ic_default_message;
+        }
+        imageView.setImageResource(iconRes);
     }
 } 
