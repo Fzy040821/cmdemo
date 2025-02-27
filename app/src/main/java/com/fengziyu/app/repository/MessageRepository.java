@@ -132,4 +132,10 @@ public class MessageRepository {
     public List<Message> getRecommendedMessages(int count) {
         return getRecommendedMessages(PRIORITY_NORMAL, count);
     }
+
+    public void update(Message message) {
+        MessageDatabase.databaseWriteExecutor.execute(() -> {
+            messageDao.update(message);
+        });
+    }
 } 

@@ -200,6 +200,25 @@ public class MainActivity extends AppCompatActivity {
         message8.setMediaUrl("https://stream7.iqilu.com/10339/upload_transcode/202002/09/20200209104902N3v5Vpxuvb.mp4");
         message8.setPriority(2);
 
+        // 添加带跳转链接的测试消息
+        Message message9 = new Message();
+        message9.setTitle("百度链接测试");
+        message9.setContent("点击跳转按钮访问百度");
+        message9.setType("SYSTEM");
+        message9.setTimestamp(System.currentTimeMillis());
+        message9.setRead(false);
+        message9.setPriority(1);
+        message9.setJumpLink("https://www.baidu.com");
+
+        Message message10 = new Message();
+        message10.setTitle("应用商店链接");
+        message10.setContent("点击跳转到应用商店");
+        message10.setType("BUSINESS");
+        message10.setTimestamp(System.currentTimeMillis());
+        message10.setRead(false);
+        message10.setPriority(2);
+        message10.setJumpLink("market://details?id=com.android.vending");
+
         // 插入数据
         viewModel.insert(message1);
         viewModel.insert(message2);
@@ -209,6 +228,8 @@ public class MainActivity extends AppCompatActivity {
         viewModel.insert(message6);
         viewModel.insert(message7);
         viewModel.insert(message8);
+        viewModel.insert(message9);
+        viewModel.insert(message10);
     }
 
     private void setupCarousel() {

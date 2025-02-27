@@ -11,20 +11,20 @@ import java.util.List;
 
 public class MessageRecommendService extends Service {
     private MessageRepository repository;
-    
-    @Override
-    public void onCreate() {
-        super.onCreate();
-        repository = new MessageRepository(getApplication());
-    }
-    
+
     private final IMessageRecommendInterface.Stub binder = new IMessageRecommendInterface.Stub() {
         @Override
         public List<Message> getRecommendedMessages(int count) throws RemoteException {
             return repository.getRecommendedMessages(count);
         }
     };
-    
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        repository = new MessageRepository(getApplication());
+    }
+
     @Nullable
     @Override
     public IBinder onBind(Intent intent) {

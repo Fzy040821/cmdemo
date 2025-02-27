@@ -4,5 +4,6 @@ import com.fengziyu.app.model.Message;
 import java.util.List;
 
 interface IMessageRecommendService {
-    List<Message> getRecommendedMessages(int count) = 1;
+    List<Message> getRecommendedMessages();
+    void saveRecommendedMessage(in Message message);
 } 

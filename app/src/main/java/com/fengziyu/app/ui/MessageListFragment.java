@@ -1,18 +1,22 @@
 package com.fengziyu.app.ui;
 
 import android.app.AlertDialog;
-import android.view.ActionMode;
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.ActionMode;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -44,7 +48,7 @@ public class MessageListFragment extends Fragment {
         @Override
         public boolean onCreateActionMode(ActionMode mode, Menu menu) {
             mode.getMenuInflater().inflate(R.menu.menu_message_selection, menu);
-            mode.setTitle("1 已选择");
+            mode.setTitle("已选择 1 项");
             return true;
         }
 
@@ -55,19 +59,18 @@ public class MessageListFragment extends Fragment {
 
         @Override
         public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
-            if (item.getItemId() == R.id.action_delete) {
-                new AlertDialog.Builder(requireContext())
-                    .setTitle("确认删除")
-                    .setMessage("确定要删除选中的 " + selectedMessages.size() + " 条消息吗？")
-                    .setPositiveButton("删除", (dialog, which) -> {
-                        // 删除数据库中的数据
-                        viewModel.deleteMessages(new ArrayList<>(selectedMessages));
-                        // 清理选中状态
-                        selectedMessages.clear();
-                        mode.finish();
-                    })
-                    .setNegativeButton("取消", null)
-                    .show();
+            int id = item.getItemId();
+            if (id == R.id.action_delete) {
+                deleteSelectedMessages();
+                return true;
+            } else if (id == R.id.action_edit) {
+                editSelectedMessage();
+                return true;
+            } else if (id == R.id.action_share) {
+                shareSelectedMessages();
+                return true;
+            } else if (id == R.id.action_jump) {
+                jumpToApp();
                 return true;
             }
             return false;
@@ -193,5 +196,97 @@ public class MessageListFragment extends Fragment {
                 actionMode.finish();
             }
         }
+    }
+
+    // 删除选中的消息
+    private void deleteSelectedMessages() {
+        new AlertDialog.Builder(requireContext())
+            .setTitle("确认删除")
+            .setMessage("确定要删除选中的 " + selectedMessages.size() + " 条消息吗？")
+            .setPositiveButton("删除", (dialog, which) -> {
+                viewModel.deleteMessages(new ArrayList<>(selectedMessages));
+                selectedMessages.clear();
+                if (actionMode != null) {
+                    actionMode.finish();
+                }
+            })
+            .setNegativeButton("取消", null)
+            .show();
+    }
+
+    // 编辑选中的消息
+    private void editSelectedMessage() {
+        if (selectedMessages.size() != 1) {
+            Toast.makeText(requireContext(), "请选择一条消息进行编辑", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Message message = selectedMessages.iterator().next();
+        showEditDialog(message);
+    }
+
+    // 分享选中的消息
+    private void shareSelectedMessages() {
+        StringBuilder content = new StringBuilder();
+        for (Message message : selectedMessages) {
+            content.append(message.getTitle())
+                  .append("\n")
+                  .append(message.getContent())
+                  .append("\n\n");
+        }
+
+        Intent shareIntent = new Intent(Intent.ACTION_SEND);
+        shareIntent.setType("text/plain");
+        shareIntent.putExtra(Intent.EXTRA_TEXT, content.toString());
+        startActivity(Intent.createChooser(shareIntent, "分享消息"));
+    }
+
+    // 跳转到其他应用
+    private void jumpToApp() {
+        if (selectedMessages.size() != 1) {
+            Toast.makeText(requireContext(), "请选择一条消息进行跳转", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Message message = selectedMessages.iterator().next();
+        String jumpLink = message.getJumpLink();
+        
+        if (jumpLink != null && !jumpLink.isEmpty()) {
+            try {
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(jumpLink));
+                startActivity(intent);
+            } catch (ActivityNotFoundException e) {
+                Toast.makeText(requireContext(), "未找到可以打开的应用", Toast.LENGTH_SHORT).show();
+            }
+        } else {
+            Toast.makeText(requireContext(), "该消息没有关联的跳转链接", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    // 显示编辑对话框
+    private void showEditDialog(Message message) {
+        View dialogView = LayoutInflater.from(requireContext())
+                .inflate(R.layout.dialog_edit_message, null);
+        
+        EditText etTitle = dialogView.findViewById(R.id.etTitle);
+        EditText etContent = dialogView.findViewById(R.id.etContent);
+        EditText etJumpLink = dialogView.findViewById(R.id.etJumpLink);
+        
+        etTitle.setText(message.getTitle());
+        etContent.setText(message.getContent());
+        etJumpLink.setText(message.getJumpLink());
+
+        new AlertDialog.Builder(requireContext())
+            .setTitle("编辑消息")
+            .setView(dialogView)
+            .setPositiveButton("保存", (dialog, which) -> {
+                message.setTitle(etTitle.getText().toString());
+                message.setContent(etContent.getText().toString());
+                message.setJumpLink(etJumpLink.getText().toString());
+                viewModel.updateMessage(message);
+                actionMode.finish();
+            })
+            .setNegativeButton("取消", null)
+            .show();
     }
 } 

@@ -9,6 +9,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import com.fengziyu.app.db.MessageDatabase;
 import com.fengziyu.app.model.Message;
+import com.fengziyu.app.db.MessageDao;
 
 public class MessageProvider extends ContentProvider {
     private static final String AUTHORITY = "com.fengziyu.app.provider";
@@ -23,11 +24,11 @@ public class MessageProvider extends ContentProvider {
         uriMatcher.addURI(AUTHORITY, PATH_MESSAGES + "/#", CODE_MESSAGES_ITEM);
     }
     
-    private MessageDatabase db;
+    private MessageDao messageDao;
     
     @Override
     public boolean onCreate() {
-        db = MessageDatabase.getInstance(getContext());
+        messageDao = MessageDatabase.getInstance(getContext()).messageDao();
         return true;
     }
     
@@ -35,16 +36,14 @@ public class MessageProvider extends ContentProvider {
     @Override
     public Cursor query(@NonNull Uri uri, @Nullable String[] projection, @Nullable String selection,
                        @Nullable String[] selectionArgs, @Nullable String sortOrder) {
-        Cursor cursor = null;
-        switch (uriMatcher.match(uri)) {
-            case CODE_MESSAGES_DIR:
-                cursor = db.messageDao().getAllMessagesCursor();
-                break;
-            case CODE_MESSAGES_ITEM:
-                long id = Long.parseLong(uri.getLastPathSegment());
-                cursor = db.messageDao().getMessageByIdCursor(id);
-                break;
+        // 查询消息数据
+        final Cursor cursor;
+        if (selection != null && selection.contains("type")) {
+            cursor = messageDao.getMessagesByTypeCursor(selectionArgs[0]);
+        } else {
+            cursor = messageDao.getAllMessagesCursor();
         }
+        cursor.setNotificationUri(getContext().getContentResolver(), uri);
         return cursor;
     }
 

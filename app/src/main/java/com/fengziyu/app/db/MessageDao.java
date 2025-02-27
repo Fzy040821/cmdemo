@@ -69,4 +69,8 @@ public interface MessageDao {
 
     @Query("SELECT * FROM messages WHERE id = :id")
     Cursor getMessageByIdCursor(long id);
+
+    // 添加这些方法用于ContentProvider
+    @Query("SELECT * FROM messages WHERE type = :type")
+    Cursor getMessagesByTypeCursor(String type);
 } 

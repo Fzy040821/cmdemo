@@ -71,4 +71,16 @@
 
     </androidx.core.widget.NestedScrollView>
 
+    <TextView
+        android:id="@+id/tvDrivingWarning"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/car_accent"
+        android:padding="16dp"
+        android:text="行车过程中暂停视频播放，请注意安全驾驶"
+        android:textColor="@color/white"
+        android:textSize="18sp"
+        android:visibility="gone"
+        app:layout_behavior="com.google.android.material.behavior.HideBottomViewOnScrollBehavior"/>
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout> 

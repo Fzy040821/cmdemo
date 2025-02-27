@@ -7,35 +7,38 @@ import android.content.ServiceConnection;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
-import android.view.View;
+import android.util.Log;
 import android.widget.Button;
 import android.widget.TextView;
 import androidx.appcompat.app.AppCompatActivity;
 import com.fengziyu.app.R;
 import com.fengziyu.app.model.Message;
 import com.fengziyu.app.recommend.IMessageRecommendInterface;
+import com.fengziyu.app.recommend.MessageRecommendService;
+
 import java.util.List;
 
 public class MessageRecommendTestActivity extends AppCompatActivity {
     private IMessageRecommendInterface messageService;
-    private TextView resultView;
-    private boolean isBound = false;
-
     private ServiceConnection connection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
+            Log.d("TestActivity", "Service connected");
             messageService = IMessageRecommendInterface.Stub.asInterface(service);
             isBound = true;
-            updateStatus("服务已连接");
+            loadRecommendedMessages();
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
+            Log.d("TestActivity", "Service disconnected");
             messageService = null;
             isBound = false;
-            updateStatus("服务已断开");
         }
     };
+
+    private TextView resultView;
+    private boolean isBound = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,16 +47,22 @@ public class MessageRecommendTestActivity extends AppCompatActivity {
 
         resultView = findViewById(R.id.resultView);
         Button testButton = findViewById(R.id.testButton);
-
         testButton.setOnClickListener(v -> testRecommendService());
 
-        // 绑定服务
+        // 修改绑定服务的方式
         Intent intent = new Intent();
-        intent.setComponent(new ComponentName(
-            "com.fengziyu.app",
-            "com.fengziyu.app.recommend.MessageRecommendService"
-        ));
+        intent.setAction("com.fengziyu.app.recommend.IMessageRecommendInterface");
+        intent.setPackage(getPackageName());
         bindService(intent, connection, Context.BIND_AUTO_CREATE);
+    }
+
+    private void loadRecommendedMessages() {
+        try {
+            List<Message> messages = messageService.getRecommendedMessages(5);
+            updateRecommendList(messages);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
     }
 
     private void testRecommendService() {
@@ -63,7 +72,6 @@ public class MessageRecommendTestActivity extends AppCompatActivity {
         }
 
         try {
-            // 获取5条推荐消息
             List<Message> messages = messageService.getRecommendedMessages(5);
             StringBuilder result = new StringBuilder();
             result.append("获取到 ").append(messages.size()).append(" 条推荐消息:\n\n");
@@ -82,7 +90,20 @@ public class MessageRecommendTestActivity extends AppCompatActivity {
     }
 
     private void updateStatus(String status) {
-        runOnUiThread(() -> resultView.setText(status));
+        resultView.setText(status);
+    }
+
+    private void updateRecommendList(List<Message> messages) {
+        StringBuilder result = new StringBuilder();
+        result.append("推荐消息列表:\n\n");
+        
+        for (Message msg : messages) {
+            result.append("标题: ").append(msg.getTitle()).append("\n");
+            result.append("内容: ").append(msg.getContent()).append("\n");
+            result.append("------------------------\n");
+        }
+        
+        updateStatus(result.toString());
     }
 
     @Override

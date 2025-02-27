@@ -85,6 +85,10 @@ public class MessageViewModel extends AndroidViewModel {
         return repository.getUnreadCountByType(type);
     }
 
+    public void updateMessage(Message message) {
+        repository.update(message);
+    }
+
     @Override
     protected void onCleared() {
         if (textToSpeech != null) {
